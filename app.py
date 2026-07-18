@@ -78,11 +78,13 @@ if st.button("Generate Analysis"):
             st.json(rubric_results)
 
             # 5. Log de metadata anoniem
-            log_run(
-                cover_letter_requested=generate_cover_letter_flag,
-                rubric_results=rubric_results,
-                raw_resume_text=resume_text,
-                raw_job_text=job_text
-            )
-
-            st.success("Analysis complete! Session metadata successfully logged.")
+            # NIEUWE SITUATIE (beperkt tot de kerngegevens):
+try:
+    log_run(
+        cover_letter_requested=generate_cover_letter_flag,
+        rubric_results=rubric_results,
+        raw_resume_text=resume_text,
+        raw_job_text=job_text
+    )
+except Exception:
+    pass
