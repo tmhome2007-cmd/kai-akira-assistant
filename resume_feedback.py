@@ -1,11 +1,17 @@
 import os
-from langchain_ollama import OllamaLLM
+import streamlit as st
+from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 
 def generate_resume_feedback(resume_text: str, job_text: str) -> str:
-    """Generates analytical feedback on missing parameters without inventing tools."""
+    """Generates analytical feedback on missing parameters using Groq Cloud API."""
     try:
-        llm = OllamaLLM(model="llama3", temperature=0.0)
+        # Haalt de API-sleutel veilig op uit de Streamlit Cloud Secrets
+        llm = ChatGroq(
+            model="llama3-8b-8192", 
+            groq_api_key=st.secrets["GROQ_API_KEY"], 
+            temperature=0.0
+        )
         
         prompt_template = ChatPromptTemplate.from_messages([
             ("system", (
@@ -25,9 +31,7 @@ def generate_resume_feedback(resume_text: str, job_text: str) -> str:
         ])
         
         chain = prompt_template | llm
-        return chain.invoke({"resume_text": resume_text, "job_text": job_text})
+        response = chain.invoke({"resume_text": resume_text, "job_text": job_text})
+        return response.content  # Groq geeft een ChatMessage object terug, we pakken de .content
     except Exception as e:
-        return f"Error connecting to Ollama: {e}"
-
-if __name__ == "__main__":
-    print("Module resume_feedback loaded cleanly.")
+        return f"Error connecting to Groq Cloud API: {e}"

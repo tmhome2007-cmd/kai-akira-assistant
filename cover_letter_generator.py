@@ -1,20 +1,20 @@
 import os
+import streamlit as st
 import warnings
-# Suppress local urllib3/LibreSSL warnings to keep terminal clean
 warnings.filterwarnings("ignore", category=UserWarning, module="urllib3")
 
-from langchain_ollama import OllamaLLM
+from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 
 def generate_cover_letter(resume_text: str, job_text: str, company_name: str = "[Company Name]", company_address: str = "[Company Address]") -> str:
-    """
-    Generates a structured US-style cover letter matching university standards,
-    using a local Llama 3 model via Ollama. 
-    Strictly forbids claiming unlisted technical skills.
-    """
+    """Generates a structured US-style cover letter using Groq Cloud API."""
     try:
-        # Temperature 0.0 voor maximale feitelijkheid
-        llm = OllamaLLM(model="llama3", temperature=0.0)
+        # Haalt de API-sleutel veilig op uit de Streamlit Cloud Secrets
+        llm = ChatGroq(
+            model="llama3-8b-8192", 
+            groq_api_key=st.secrets["GROQ_API_KEY"], 
+            temperature=0.0
+        )
         
         prompt_template = ChatPromptTemplate.from_messages([
            ("system", (
@@ -42,14 +42,12 @@ def generate_cover_letter(resume_text: str, job_text: str, company_name: str = "
         ])
         
         chain = prompt_template | llm
-        return chain.invoke({
+        response = chain.invoke({
             "resume_text": resume_text,
             "job_text": job_text,
             "company_name": company_name,
             "company_address": company_address
         })
+        return response.content
     except Exception as e:
         return f"An error occurred: {e}"
-
-if __name__ == "__main__":
-    print("Module cover_letter_generator loaded cleanly.")
