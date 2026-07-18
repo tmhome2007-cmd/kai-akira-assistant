@@ -35,7 +35,7 @@ def check_metric_grounding(output_text: str, resume_text: str) -> bool:
             
     return True
 
-def score_output_against_rubric(output_text: str, resume_text: str, job_text: str, target_word_count: int = 300) -> dict:
+def score_output_against_rubric(output_text: str, resume_text: str, job_text: str, target_word_count: int = 350) -> dict:
     """Scores the generated output against safety, compliance, and length rubrics."""
     
     # --- Bestaande checks basislogica ---

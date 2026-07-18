@@ -74,7 +74,7 @@ if st.button("Generate Analysis"):
             # 4. Kwaliteitscontrole
             st.markdown("### 🔍 Quality Rubric Report")
             text_to_score = cover_letter if generate_cover_letter_flag else feedback
-            rubric_results = score_output_against_rubric(text_to_score, resume_text, job_text)
+            rubric_results = score_output_against_rubric(text_to_score, resume_text, job_text, target_word_count=350)
             st.json(rubric_results)
 
             # 5. Log de metadata anoniem
