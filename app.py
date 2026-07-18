@@ -10,6 +10,14 @@ from utils import log_run, check_for_pii_leak
 
 st.title("Kai Akira — Resume & Cover Letter Assistant")
 st.caption("ATS-aware resume and cover letter tailoring. No guarantees, no hype — just faster, sharper applications.")
+
+# --- Nieuwe Beta & Privacy Waarschuwing ---
+st.info(
+    "⚠️ **Early Beta Notice:** Please don't upload resumes containing sensitive personal data "
+    "you're not comfortable processing through an AI tool. Only anonymized metadata "
+    "(word counts, pass/fail checks) is logged — no resume or job description text is stored."
+)
+
 st.markdown("---")
 
 st.subheader("1. Upload Documents")
