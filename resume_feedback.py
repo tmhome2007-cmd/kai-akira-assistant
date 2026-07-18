@@ -8,7 +8,7 @@ def generate_resume_feedback(resume_text: str, job_text: str) -> str:
     try:
         # Haalt de API-sleutel veilig op uit de Streamlit Cloud Secrets
         llm = ChatGroq(
-            model="llama3-8b-8192", 
+            model="llama-3.1-8b-instant",  # <-- Dit was "llama3-8b-8192"
             groq_api_key=st.secrets["GROQ_API_KEY"], 
             temperature=0.0
         )
