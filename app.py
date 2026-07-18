@@ -60,12 +60,18 @@ if st.button("Generate Analysis"):
                 cover_letter = generate_cover_letter(resume_text, job_text, company_name, company_address)
                 st.write(cover_letter)
                 
-                # Check direct op PII lekken in de brief
+                # NIEUWE SITUATIE (Gecorrigeerd qua inspringing)
                 pii_results = check_for_pii_leak(cover_letter)
-                if pii_results["emails"] or pii_results["phones"] or pii_results["addresses"]:
+
+                # We gebruiken .get() zodat de app niet crasht als een sleutel ontbreekt
+                has_email = pii_results.get("emails") or pii_results.get("email", [])
+                has_phone = pii_results.get("phones") or pii_results.get("phone", [])
+                has_address = pii_results.get("addresses") or pii_results.get("address", [])
+
+                if has_email or has_phone or has_address:
                     st.warning(f"⚠️ **PII Alert in Motivatiebrief:** Mogelijke persoonsgegevens gedetecteerd: {pii_results}")
 
-            # 4. Kwaliteitscontrole (Hier hebben we nu job_text correct toegevoegd!)
+            # 4. Kwaliteitscontrole
             st.markdown("### 🔍 Quality Rubric Report")
             text_to_score = cover_letter if generate_cover_letter_flag else feedback
             rubric_results = score_output_against_rubric(text_to_score, resume_text, job_text)
