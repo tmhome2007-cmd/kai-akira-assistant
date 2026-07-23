@@ -34,9 +34,12 @@ generate_cover_letter_flag = st.checkbox("Also generate a cover letter", value=T
 company_name = st.text_input("Company Name (Optional)", value="[Company Name]")
 company_address = st.text_input("Company Address (Optional)", value="[Company Address]")
 
-# Calculate & display remaining uses dynamically
+# Placeholder om de teller direct op het scherm te kunnen updaten
+counter_placeholder = st.empty()
+
+# Eerste weergave van de teller
 remaining = max(0, 3 - st.session_state.generation_count)
-st.caption(f"Free generations remaining in this session: **{remaining} / 3**")
+counter_placeholder.caption(f"Free generations remaining in this session: **{remaining} / 3**")
 
 if st.button("Generate Analysis"):
     # Check limit first
@@ -47,11 +50,15 @@ if st.button("Generate Analysis"):
     elif not job_text.strip():
         st.error("Please paste a job description first.")
     else:
-        # Increment counter IMMEDIATELY upon starting a valid generation attempt
+        # 1. Verhoog de teller in de state
         st.session_state.generation_count += 1
+        
+        # 2. Update de tekst bovenaan DIRECT op het scherm!
+        new_remaining = max(0, 3 - st.session_state.generation_count)
+        counter_placeholder.caption(f"Free generations remaining in this session: **{new_remaining} / 3**")
 
         with st.spinner("Processing files and analyzing with AI..."):
-            # 1. Extract text
+            # Extraheer tekst
             with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as temp_file:
                 temp_file.write(uploaded_file.read())
                 temp_path = temp_file.name
@@ -62,7 +69,7 @@ if st.button("Generate Analysis"):
                 if os.path.exists(temp_path):
                     os.remove(temp_path)
 
-            # 2. ATS Feedback & Match Score
+            # ATS Feedback & Match Score
             st.markdown("### 📊 ATS Resume Feedback")
             feedback, match_score = generate_resume_feedback(resume_text, job_text)
             
@@ -74,7 +81,7 @@ if st.button("Generate Analysis"):
             st.caption("ℹ️ *This is an approximate, early-stage keyword overlap score, not a scientific ATS algorithm.*")
             st.write(feedback)
 
-            # 3. Cover Letter
+            # Cover Letter
             cover_letter = ""
             if generate_cover_letter_flag:
                 st.markdown("### ✉️ Tailored Cover Letter")
@@ -90,13 +97,13 @@ if st.button("Generate Analysis"):
                 if has_email or has_phone or has_address:
                     st.warning(f"⚠️ **PII Alert in Motivatiebrief:** Mogelijke persoonsgegevens gedetecteerd: {pii_results}")
 
-            # 4. Quality Rubric
+            # Quality Rubric
             st.markdown("### 🔍 Quality Rubric Report")
             text_to_score = cover_letter if generate_cover_letter_flag else feedback
             rubric_results = score_output_against_rubric(text_to_score, resume_text, job_text, target_word_count=350)
             st.json(rubric_results)
 
-            # 5. Log Metadata
+            # Log Metadata
             try:
                 log_run(
                     cover_letter_requested=generate_cover_letter_flag,
