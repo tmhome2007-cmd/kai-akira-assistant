@@ -11,6 +11,10 @@ from utils import log_run, check_for_pii_leak
 st.title("Kai Akira — Resume & Cover Letter Assistant")
 st.caption("ATS-aware resume and cover letter tailoring. No guarantees, no hype — just faster, sharper applications.")
 
+# --- Sessie State voor Gebruikslimiet (Max 3 pogingen) ---
+if "generation_count" not in st.session_state:
+    st.session_state.generation_count = 0
+
 # --- Beta & Privacy Waarschuwing ---
 st.info(
     "⚠️ **Early Beta Notice:** Please don't upload resumes containing sensitive personal data "
@@ -30,8 +34,15 @@ generate_cover_letter_flag = st.checkbox("Also generate a cover letter", value=T
 company_name = st.text_input("Company Name (Optional)", value="[Company Name]")
 company_address = st.text_input("Company Address (Optional)", value="[Company Address]")
 
+# Toon resterende gratis pogingen
+remaining = max(0, 3 - st.session_state.generation_count)
+st.caption(f"Free generations remaining in this session: **{remaining} / 3**")
+
 if st.button("Generate Analysis"):
-    if not uploaded_file:
+    # Check 1: Controleer of de gebruiker de limiet van 3 heeft bereikt
+    if st.session_state.generation_count >= 3:
+        st.warning("⛔ **You've used your 3 free samples** — pricing/waitlist info coming soon!")
+    elif not uploaded_file:
         st.error("Please upload a resume first.")
     elif not job_text.strip():
         st.error("Please paste a job description first.")
@@ -48,9 +59,18 @@ if st.button("Generate Analysis"):
                 if os.path.exists(temp_path):
                     os.remove(temp_path)
 
-            # 2. Genereer ATS Feedback
+            # 2. Genereer ATS Feedback & Match Score
             st.markdown("### 📊 ATS Resume Feedback")
-            feedback = generate_resume_feedback(resume_text, job_text)
+            feedback, match_score = generate_resume_feedback(resume_text, job_text)
+            
+            # Prominente weergave van de Match Score bovenaan de feedback
+            st.metric(
+                label="Approximate ATS Term Match", 
+                value=f"~{match_score}%", 
+                help="Early-stage indicator comparing key job description terms with your resume."
+            )
+            st.caption("ℹ️ *This is an approximate, early-stage keyword overlap score, not a scientific ATS algorithm.*")
+            
             st.write(feedback)
 
             # 3. Genereer Motivatiebrief indien aangevinkt
@@ -60,10 +80,8 @@ if st.button("Generate Analysis"):
                 cover_letter = generate_cover_letter(resume_text, job_text, company_name, company_address)
                 st.write(cover_letter)
                 
-                # NIEUWE SITUATIE (Gecorrigeerd qua inspringing)
+                # PII Scanner
                 pii_results = check_for_pii_leak(cover_letter)
-
-                # We gebruiken .get() zodat de app niet crasht als een sleutel ontbreekt
                 has_email = pii_results.get("emails") or pii_results.get("email", [])
                 has_phone = pii_results.get("phones") or pii_results.get("phone", [])
                 has_address = pii_results.get("addresses") or pii_results.get("address", [])
@@ -78,13 +96,15 @@ if st.button("Generate Analysis"):
             st.json(rubric_results)
 
             # 5. Log de metadata anoniem
-            # NIEUWE SITUATIE (beperkt tot de kerngegevens):
-try:
-    log_run(
-        cover_letter_requested=generate_cover_letter_flag,
-        rubric_results=rubric_results,
-        raw_resume_text=resume_text,
-        raw_job_text=job_text
-    )
-except Exception:
-    pass
+            try:
+                log_run(
+                    cover_letter_requested=generate_cover_letter_flag,
+                    rubric_results=rubric_results
+                )
+            except Exception:
+                pass
+
+            # 6. Verhoog de teller na een succesvolle analyse
+            st.session_state.generation_count += 1
+
+            st.success("Analysis complete! Session metadata successfully logged.")
